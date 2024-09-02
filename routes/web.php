@@ -52,7 +52,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->group(['prefix' => 'users'], function () use ($router) {
             $router->get('/', 'AuthController@index');
             $router->post('/', 'AuthController@store');
-            $router->get('/user-detail', 'AuthController@userDetail');
+            $router->get('/profile', 'AuthController@profile');
+            $router->put('/profile-update', 'AuthController@profileUpdate');
             $router->get('/{id}', 'AuthController@show');
             $router->put('/{id}', 'AuthController@update');
             $router->delete('/{id}', 'AuthController@destroy');

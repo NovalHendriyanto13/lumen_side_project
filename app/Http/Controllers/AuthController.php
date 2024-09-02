@@ -131,7 +131,7 @@ class AuthController extends Controller
     }
 
     // Show a specific user
-    public function userDetail(Request $request)
+    public function profile(Request $request)
     {
 
         $user = auth()->user();
@@ -139,6 +139,29 @@ class AuthController extends Controller
         if (!$user) {
             return $this->failed([], 'User not found', 404);
         }
+
+        return $this->success($user);
+    }
+
+    public function profileUpdate(Request $request)
+    {
+
+        $id = auth()->user()->id;
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return $this->failed([], 'User not found', 404);
+        }
+
+        $validator = $this->validate($request, [
+            'nama' => 'sometimes|required|string|max:255',
+            'username' => 'sometimes|required|string|max:255|unique:users,username,' . $id,
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'sometimes|required|string|min:6',
+        ]);
+
+        $user->update($request->all());
 
         return $this->success($user);
     }
