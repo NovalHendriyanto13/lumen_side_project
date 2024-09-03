@@ -39,4 +39,12 @@ class RequestList extends Model
     {
         return $this->hasMany(RequestDetail::class);
     }
+
+    public function getTglPermintaanAttribute($value) {
+        return date('Y-m-d', strtotime($value));
+    }
+
+    public function getTglSelesaiAttribute($value) {
+        return date('Y-m-d', strtotime($value));
+    }
 }
