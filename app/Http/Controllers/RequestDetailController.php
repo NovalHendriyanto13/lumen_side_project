@@ -2,29 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RequestList;
 use App\Models\RequestDetail;
 use Illuminate\Http\Request;
 
 class RequestDetailController extends Controller
 {
-    // Retrieve all request details
-    public function index()
-    {
-        $details = RequestDetail::all();
-        return $this->success($details);
-    }
-
-    // Retrieve a single request detail by ID
-    public function show($id)
-    {
-        $detail = RequestDetail::find($id);
-
-        if (!$detail) {
-            return $this->failed([], 'Request detail not found', 404);
-        }
-
-        return $this->success($detail);
-    }
+    private $_statuses = ['request', 'pickup', 'checking', 'on_progress', 'delivery', 'done'];
 
     // Create a new request detail
     public function store(Request $request)
@@ -69,6 +53,11 @@ class RequestDetailController extends Controller
 
         if (!$detail) {
             return $this->failed([], 'Request detail not found', 404);
+        }
+
+        $requestList = RequestList::where('id', $detail->id)->first();
+        if (in_array($requestList->status, ['checking', 'on_progress', 'delivery', 'done'])) {
+            return $this->failed([], 'Tidak bisa untuk delete data, status sudah :'. $requestList->status);
         }
 
         $detail->delete();

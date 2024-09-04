@@ -25,23 +25,26 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->group(['middleware' => 'auth:api'], function () use ($router) {
         $router->group(['prefix' => 'request-lists'], function () use ($router) {
+            $router->group(['middleware' => 'role_access:guest'], function() use ($router) {
+                $router->post('/', 'RequestListController@store');
+                $router->put('/{id}', 'RequestListController@update'); // Update a specific request list
+            });
             $router->get('/', 'RequestListController@index');      // Retrieve all request lists
-            $router->get('/{id}', 'RequestListController@show');   // Retrieve a specific request list
-            $router->post('/', 'RequestListController@store');     // Create a new request list
-            $router->put('/update-status/{id}', 'RequestListController@updateStatus');
-            $router->put('/{id}', 'RequestListController@update'); // Update a specific request list
-            $router->delete('/{id}', 'RequestListController@destroy'); // Delete a specific request list
+            $router->get('/{id}', 'RequestListController@show');  
+            $router->group(['middleware' => 'role_access'], function() use ($router) {
+                $router->put('/update-status/{id}', 'RequestListController@updateStatus');
+                $router->delete('/{id}', 'RequestListController@destroy');
+                $router->post('/download-report', 'RequestListController@downloadReport');
+            });
         });
 
         $router->group(['prefix' => 'request-details'], function () use ($router) {
-            $router->get('/', 'RequestDetailController@index');      // Get all request details
-            $router->get('/{id}', 'RequestDetailController@show');   // Get a specific request detail by ID
             $router->post('/', 'RequestDetailController@store');     // Create a new request detail
             $router->put('/{id}', 'RequestDetailController@update'); // Update an existing request detail
             $router->delete('/{id}', 'RequestDetailController@destroy'); // Delete a request detail by ID
         });
         
-        $router->group(['prefix' => 'laundry-items'], function () use ($router) {
+        $router->group(['prefix' => 'laundry-items', 'middleware' => 'role_access'], function () use ($router) {
             $router->get('/', 'LaundryItemController@index');      // Get all laundry items
             $router->get('/{id}', 'LaundryItemController@show');   // Get a specific laundry item by ID
             $router->post('/', 'LaundryItemController@store');     // Create a new laundry item

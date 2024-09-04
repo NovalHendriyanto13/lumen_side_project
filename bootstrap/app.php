@@ -79,6 +79,7 @@ $app->middleware([
 
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
+    'role_access' => App\Http\Middleware\RoleAccessMiddleware::class,
 ]);
 
 /*
@@ -98,7 +99,10 @@ $app->register(App\Providers\AuthServiceProvider::class);
 
 $app->register(Illuminate\Database\MigrationServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+$app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
 
+// Add alias for Excel
+class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
 
 /*
 |--------------------------------------------------------------------------

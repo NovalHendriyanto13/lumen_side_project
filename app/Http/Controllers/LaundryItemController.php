@@ -30,7 +30,7 @@ class LaundryItemController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'id_item' => 'required|integer',
+            'id_item' => 'required',
             'nama' => 'required|string|max:255',
         ]);
 

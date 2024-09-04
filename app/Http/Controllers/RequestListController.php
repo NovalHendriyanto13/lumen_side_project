@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\RequestList;
+use App\Models\RequestDetail;
+use App\Exports\RequestListExport;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RequestListController extends Controller
 {
-    private $_statuses = ['request', 'pickup', 'checking', 'on_progress', 'delivery', 'done'];
+    private $_statuses = ['request', 'pickup', 'checking', 'progress', 'delivery', 'done'];
+    private $_allow = 'guest';
     // Retrieve all request lists
     public function index()
     {
@@ -25,6 +28,9 @@ class RequestListController extends Controller
             return $this->failed([], 'Request not found', 404);
         }
 
+        $detailItems = RequestDetail::where('request_list_id', $id)->get();
+        $request->items = $detailItems;
+
         return $this->success($request);
     }
 
@@ -33,7 +39,8 @@ class RequestListController extends Controller
     {
         $this->validate($request, [
             'no_kamar' => 'required|string|max:5',
-            'tgl_selesai' => 'nullable'
+            'tgl_selesai' => 'nullable',
+            'items' => 'required|array'
         ]);
 
         $tglSelesai = empty($request->tgl_selesai) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d', strtotime($request->tgl_selesai));
@@ -49,6 +56,18 @@ class RequestListController extends Controller
         }
 
         $newRequest = RequestList::create($payload);
+
+        $requestId = $newRequest->id;
+
+        $payloadDetail = array_map(function($item) use ($requestId) {
+            $item['request_list_id'] = $requestId;
+            return $item;
+        }, $request->items);
+        
+        RequestDetail::insert($payloadDetail);
+
+        $detailItems = RequestDetail::where('request_list_id', $requestId)->get();
+        $newRequest->items = $detailItems;
 
         return $this->success($newRequest, 201);
     }
@@ -81,7 +100,7 @@ class RequestListController extends Controller
             if (in_array($requestList->status, ['checking', 'on_progress', 'delivery', 'done'])) {
                 return $this->failed([], 'Tidak bisa untuk update data, status sudah :'. $requestList->status);
             }
-        }
+        }      
 
         $requestList->update($request->all());
 
@@ -110,35 +129,44 @@ class RequestListController extends Controller
             return $this->failed([], 'Request not found', 404);
         }
 
-        $this->validate($request, [
-            'status' => 'string|max:10',
-        ]);
-
-        $requestList->update($request->all());
+        $currentStatus = $requestList->status;
+        $newStatusIndex = (array_search($currentStatus, $this->_statuses)) + 1;
+        
+        if ($newStatusIndex >= (count($this->_statuses))) {
+            return $this->failed([], 'laundry sudah selesai', 401);
+        }
+        if ($this->_statuses[$newStatusIndex] == 'pickup') {
+            $requestList->no_pickup = 'PU'.substr(strtotime('now'), -3, 3);
+        }
+        $requestList->status = $this->_statuses[$newStatusIndex];
+        $requestList->save();
 
         return $this->success($requestList);
     }
 
-    public function createWithDetail(Request $request)
-    {
-        $this->validate($request, [
-            'no_kamar' => 'required|string|max:5',
-            'tgl_selesai' => 'nullable',
-            'items' => 'required|array'
-        ]);
+    public function downloadReport(Request $request) {
 
-        $tglSelesai = empty($request->tgl_selesai) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d', strtotime($request->tgl_selesai));
-        $payload = array_merge($request->all(), [
-            'user_id' => $request->auth->id,
-            'no_permintaan' => 'RL'.substr(strtotime('now'), -3, 3),
-            'tgl_permintaan' => date('Y-m-d'),
-            'tgl_selesai' => $tglSelesai,
-            'status' => 'request'
-        ]);
-        if ($payload['tgl_selesai'] < $payload['tgl_permintaan']) {
-            return $this->failed([], 'Tgl Selesai tidak boleh kurang dari hari ini');
-        }
+        $requestList = RequestList::select([
+            'request_list.tgl_permintaan',
+            'request_list.tgl_selesai',
+            'users.nama',
+            'request_list.no_permintaan',
+            'request_list.no_pickup',
+            'request_list.no_kamar',
+            'request_list.status',
+            'laundry_item.id_item AS kode_pakaian',
+            'laundry_item.nama AS nama_pakaian',
+            'request_detail.description AS deskripsi',
+            'request_detail.jml_item'
+        ])
+            ->join('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
+            ->join('users', 'request_list.user_id', '=', 'users.id')
+            ->join('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->orderBy('request_list.id', 'desc')
+            ->get();
 
-        $newRequest = RequestList::create($payload);
+        $exports = new RequestListExport($requestList);
+
+        return Excel::download($exports, 'report.xlsx');
     }
 }
