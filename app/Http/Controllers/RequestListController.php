@@ -15,7 +15,14 @@ class RequestListController extends Controller
     // Retrieve all request lists
     public function index()
     {
-        $requests = RequestList::all();
+        $user = auth()->user();
+        $role = $user->role;
+                
+        $requests = RequestList::when($role == 'guest', function($q) use ($user) {
+            return $q->where('user_id', $user->id);
+        })
+            ->get();
+
         return $this->success($requests);
     }
 
@@ -28,7 +35,17 @@ class RequestListController extends Controller
             return $this->failed([], 'Request not found', 404);
         }
 
-        $detailItems = RequestDetail::where('request_list_id', $id)->get();
+        $detailItems = RequestDetail::select([
+            'request_detail.id',
+            'request_detail.request_list_id',
+            'request_detail.id_item',
+            'request_detail.jml_item',
+            'request_detail.description',
+            'laundry_item.id_item as item_code',
+            'laundry_item.nama'
+        ])
+            ->join('laundry_item', 'request_detail.id_item', 'laundry_item.id')
+            ->where('request_list_id', $id)->get();
         $request->items = $detailItems;
 
         return $this->success($request);
@@ -145,7 +162,7 @@ class RequestListController extends Controller
     }
 
     public function downloadReport(Request $request) {
-
+        
         $requestList = RequestList::select([
             'request_list.tgl_permintaan',
             'request_list.tgl_selesai',
@@ -156,10 +173,10 @@ class RequestListController extends Controller
             'request_list.status',
             'laundry_item.id_item AS kode_pakaian',
             'laundry_item.nama AS nama_pakaian',
+            'request_detail.jml_item',
             'request_detail.description AS deskripsi',
-            'request_detail.jml_item'
         ])
-            ->join('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
+            ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
             ->join('users', 'request_list.user_id', '=', 'users.id')
             ->join('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
             ->orderBy('request_list.id', 'desc')
