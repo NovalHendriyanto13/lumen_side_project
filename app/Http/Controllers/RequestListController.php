@@ -75,12 +75,17 @@ class RequestListController extends Controller
         $newRequest = RequestList::create($payload);
 
         $requestId = $newRequest->id;
-
+        
         $payloadDetail = array_map(function($item) use ($requestId) {
             $item['request_list_id'] = $requestId;
+            $item['id_item'] = $item['id'];
+            unset($item['item_code']);
+            unset($item['nama']);
+            unset($item['uniqueId']);
+            unset($item['id']);
             return $item;
         }, $request->items);
-        
+
         RequestDetail::insert($payloadDetail);
 
         $detailItems = RequestDetail::where('request_list_id', $requestId)->get();
@@ -177,8 +182,11 @@ class RequestListController extends Controller
             'request_detail.description AS deskripsi',
         ])
             ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
-            ->join('users', 'request_list.user_id', '=', 'users.id')
-            ->join('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->leftJoin('users', 'request_list.user_id', '=', 'users.id')
+            ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->when(!empty($request->status), function($q) use ($request) {
+                return $q->where('request_list.status', $request->status);
+            })
             ->orderBy('request_list.id', 'desc')
             ->get();
 

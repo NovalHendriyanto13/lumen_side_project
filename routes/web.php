@@ -44,12 +44,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
             $router->delete('/{id}', 'RequestDetailController@destroy'); // Delete a request detail by ID
         });
         
-        $router->group(['prefix' => 'laundry-items', 'middleware' => 'role_access'], function () use ($router) {
+        $router->group(['prefix' => 'laundry-items'], function () use ($router) {
             $router->get('/', 'LaundryItemController@index');      // Get all laundry items
-            $router->get('/{id}', 'LaundryItemController@show');   // Get a specific laundry item by ID
-            $router->post('/', 'LaundryItemController@store');     // Create a new laundry item
-            $router->put('/{id}', 'LaundryItemController@update'); // Update an existing laundry item
-            $router->delete('/{id}', 'LaundryItemController@destroy'); // Delete a laundry item by ID
+            $router->group(['middleware' => 'role_access'], function() use ($router) {
+                $router->get('/{id}', 'LaundryItemController@show');   // Get a specific laundry item by ID
+                $router->post('/', 'LaundryItemController@store');     // Create a new laundry item
+                $router->put('/{id}', 'LaundryItemController@update'); // Update an existing laundry item
+                $router->delete('/{id}', 'LaundryItemController@destroy'); // Delete a laundry item by ID
+            });
         });
 
         $router->group(['prefix' => 'users'], function () use ($router) {
