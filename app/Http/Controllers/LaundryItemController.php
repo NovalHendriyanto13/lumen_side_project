@@ -34,6 +34,11 @@ class LaundryItemController extends Controller
             'nama' => 'required|string|max:255',
         ]);
 
+        $item = LaundryItem::where('id_item', $request->id_item)->first();
+        if (!empty($item)) {
+            return $this->failed([], 'ID Item sudah ada', 201);
+        }
+
         $newItem = LaundryItem::create($request->all());
 
         return $this->success($newItem, 201);
@@ -49,7 +54,7 @@ class LaundryItemController extends Controller
         }
 
         $this->validate($request, [
-            'id_item' => 'sometimes|required|integer',
+            'id_item' => 'sometimes|required',
             'nama' => 'sometimes|required|string|max:255',
         ]);
 

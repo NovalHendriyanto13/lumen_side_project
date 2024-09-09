@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Facades\Excel;
 class RequestListController extends Controller
 {
     private $_statuses = ['request', 'pickup', 'checking', 'progress', 'delivery', 'done'];
-    private $_allow = 'guest';
     // Retrieve all request lists
     public function index()
     {
@@ -21,6 +20,12 @@ class RequestListController extends Controller
         $requests = RequestList::when($role == 'guest', function($q) use ($user) {
             return $q->where('user_id', $user->id);
         })
+            ->when($role == 'checker', function($q) use ($user) {
+                return $q->whereIn('status', ['pickup']);
+            })
+            ->when(!in_array($role, ['checker', 'guest']), function($q) use ($user) {
+                return $q->whereNotIn('status', ['pickup']);
+            })
             ->get();
 
         return $this->success($requests);
