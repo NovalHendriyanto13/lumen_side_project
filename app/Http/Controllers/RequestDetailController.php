@@ -43,7 +43,20 @@ class RequestDetailController extends Controller
 
         $detail->update($request->all());
 
-        return $this->success($detail);
+        $response = RequestDetail::select([
+            'request_detail.id',
+            'request_detail.request_list_id',
+            'request_detail.id_item',
+            'request_detail.jml_item',
+            'request_detail.description',
+            'laundry_item.id_item AS item_code',
+            'laundry_item.nama'
+        ])
+            ->leftJoin('laundry_item', 'request_detail.id_item', 'laundry_item.id')
+            ->where('request_detail.id', $id)
+            ->first();
+
+        return $this->success($response);
     }
 
     // Delete an existing request detail by ID
