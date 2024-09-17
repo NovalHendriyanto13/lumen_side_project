@@ -77,6 +77,7 @@ class AuthController extends Controller
             'alamat' => $request->alamat,
             'password' => $request->password, // Password will be hashed by the model
             'role' => $request->role,
+            'user_kru' => $request->user_kru,
         ]);
 
         return $this->success($user, 201);

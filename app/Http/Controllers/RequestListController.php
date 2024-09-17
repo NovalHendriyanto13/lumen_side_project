@@ -172,11 +172,11 @@ class RequestListController extends Controller
     }
 
     public function downloadReport(Request $request) {
-        
         $requestList = RequestList::select([
             'request_list.tgl_permintaan',
             'request_list.tgl_selesai',
             'users.nama',
+            'users.user_kru',
             'request_list.no_permintaan',
             'request_list.no_pickup',
             'request_list.no_kamar',
@@ -191,6 +191,9 @@ class RequestListController extends Controller
             ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
             ->when(!empty($request->status), function($q) use ($request) {
                 return $q->where('request_list.status', $request->status);
+            })
+            ->when(!empty($request->user_kru), function($q) use ($request) {
+                return $q->where('users.user_kru', $request->user_kru);
             })
             ->orderBy('request_list.id', 'desc')
             ->get();
