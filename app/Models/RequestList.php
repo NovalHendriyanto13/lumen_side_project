@@ -20,6 +20,10 @@ class RequestList extends Model
         'tgl_permintaan',
         'no_kamar',
         'tgl_selesai',
+        'jam_selesai',
+        'jam_pickup',
+        'checked_by',
+        'delivery_by',
         'status',
     ];
 

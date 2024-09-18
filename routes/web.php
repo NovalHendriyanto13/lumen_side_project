@@ -35,6 +35,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
                 $router->put('/update-status/{id}', 'RequestListController@updateStatus');
                 $router->delete('/{id}', 'RequestListController@destroy');
                 $router->post('/download-report', 'RequestListController@downloadReport');
+                $router->post('/download-pdf', 'RequestListController@downloadPdf');
             });
         });
 

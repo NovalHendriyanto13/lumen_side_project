@@ -7,6 +7,7 @@ use App\Models\RequestDetail;
 use App\Exports\RequestListExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RequestListController extends Controller
 {
@@ -62,21 +63,24 @@ class RequestListController extends Controller
         $this->validate($request, [
             'no_kamar' => 'required|string|max:5',
             'tgl_selesai' => 'nullable',
+            'jam_selesai' => 'nullable',
             'items' => 'required|array'
         ]);
 
         $tglSelesai = empty($request->tgl_selesai) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d', strtotime($request->tgl_selesai));
+        $jamSelesai = empty($request->jam_selesai) ? date('H:i:s', strtotime('NOW')) : date('H:i:s', strtotime($request->jam_selesai));
         $payload = array_merge($request->all(), [
             'user_id' => $request->auth->id,
             'no_permintaan' => 'RL'.substr(strtotime('now'), -3, 3),
             'tgl_permintaan' => date('Y-m-d'),
             'tgl_selesai' => $tglSelesai,
+            'jam_selesai' => $jamSelesai,
             'status' => 'request'
         ]);
         if ($payload['tgl_selesai'] < $payload['tgl_permintaan']) {
             return $this->failed([], 'Tgl Selesai tidak boleh kurang dari hari ini');
         }
-
+        
         $newRequest = RequestList::create($payload);
 
         $requestId = $newRequest->id;
@@ -112,12 +116,15 @@ class RequestListController extends Controller
             'no_pickup' => 'string|max:5',
             'no_kamar' => 'sometimes|required|string|max:5',
             'tgl_selesai' => 'nullable|date',
+            'jam_selesai' => 'nullable',
         ]);
 
         $tglSelesai = empty($request->tgl_selesai) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d', strtotime($request->tgl_selesai));
+        $jamSelesai = empty($request->jam_selesai) ? date('H:i:s', strtotime('NOW')) : date('H:i:s', strtotime($request->jam_selesai));
         $payload = array_merge($request->all(), [
             'user_id' => $request->auth->id,
             'tgl_selesai' => $tglSelesai,
+            'jam_selesai' => $jamSelesai,
         ]);
         if ($payload['tgl_selesai'] < $requestList->tgl_permintaan) {
             return $this->failed([], 'Tgl Selesai tidak boleh kurang dari hari ini');
@@ -164,6 +171,13 @@ class RequestListController extends Controller
         }
         if ($this->_statuses[$newStatusIndex] == 'pickup') {
             $requestList->no_pickup = 'PU'.substr(strtotime('now'), -3, 3);
+            $requestList->jam_pickup = date('H:i:s');
+        }
+        if ($this->_statuses[$newStatusIndex] == 'checking') {
+            $requestList->checked_by = auth()->user()->id;
+        }
+        if ($this->_statuses[$newStatusIndex] == 'delivery') {
+            $requestList->delivery_by = auth()->user()->id;
         }
         $requestList->status = $this->_statuses[$newStatusIndex];
         $requestList->save();
@@ -181,6 +195,8 @@ class RequestListController extends Controller
             'request_list.no_pickup',
             'request_list.no_kamar',
             'request_list.status',
+            'request_list.jam_pickup',
+            'request_list.jam_selesai',
             'laundry_item.id_item AS kode_pakaian',
             'laundry_item.nama AS nama_pakaian',
             'request_detail.jml_item',
@@ -201,5 +217,53 @@ class RequestListController extends Controller
         $exports = new RequestListExport($requestList);
 
         return Excel::download($exports, 'report.xlsx');
+    }
+
+    public function downloadPdf(Request $request) {
+        $requestList = RequestList::select([
+            'request_list.id',
+            'request_list.tgl_permintaan',
+            'request_list.tgl_selesai',
+            'users.nama',
+            'users.user_kru',
+            'request_list.no_permintaan',
+            'request_list.no_pickup',
+            'request_list.no_kamar',
+            'request_list.status',
+            'request_list.jam_pickup',
+            'request_list.jam_selesai',
+            'laundry_item.id_item AS kode_pakaian',
+            'laundry_item.nama AS nama_pakaian',
+            'request_detail.jml_item',
+            'request_detail.description AS deskripsi',
+            'checker.nama AS checked_by',
+            'delivery.nama AS delivery_by'
+        ])
+            ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
+            ->leftJoin('users', 'request_list.user_id', '=', 'users.id')
+            ->leftJoin('users AS checker', 'request_list.checked_by', '=', 'checker.id')
+            ->leftJoin('users AS delivery', 'request_list.delivery_by', '=', 'delivery.id')
+            ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->when(!empty($request->status), function($q) use ($request) {
+                return $q->where('request_list.status', $request->status);
+            })
+            ->when(!empty($request->user_kru), function($q) use ($request) {
+                return $q->where('users.user_kru', $request->user_kru);
+            })
+            ->orderBy('request_list.id', 'desc')
+            ->get();
+
+        $data = [
+            'title' => 'PICKUP AND DELIVERY',
+            'crew' => !empty($request->user_kru) ? $request->user_kru : '',
+            'items' => $requestList,
+        ];
+        // return view('reports.request-list.index', $data);
+        // Load the view and pass the data
+        $pdf = Pdf::loadView('reports.request-list.index', $data)->setPaper('letter', 'landscape');;
+        
+        // // Return the generated PDF as a download
+        $filename = 'Laundry_Report_'.date('Ymd');
+        return $pdf->download($filename.'.pdf');
     }
 }

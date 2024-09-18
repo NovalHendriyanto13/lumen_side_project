@@ -7,8 +7,10 @@ use App\Models\RequestDetail;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithEvents;
 
-class RequestListExport implements FromCollection, WithHeadings
+class RequestListExport implements FromCollection, WithHeadings, WithEvents
 {
     protected $_data;
 
@@ -32,6 +34,8 @@ class RequestListExport implements FromCollection, WithHeadings
             $data->no_pickup,
             $data->no_kamar,
             $data->status,
+            $data->jam_pickup,
+            $data->jam_selesai,
             $data->kode_pakaian,
             $data->nama_pakaian,
             $data->jml_item,
@@ -49,10 +53,25 @@ class RequestListExport implements FromCollection, WithHeadings
             'No Pickup',
             'No Kamar',
             'Status',
+            'Jam Pickup',
+            'Jam Selesai',
             'Kode Pakaian',
             'Nama Pakaian',
             'Jumlah',
             'Deskripsi'
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                // Merge cells, for example, merging A1:E1
+                $event->sheet->getDelegate()->mergeCells('A1:E1');
+
+                // Optionally, apply styling
+                $event->sheet->getDelegate()->getStyle('A1:E1')->getAlignment()->setHorizontal('center');
+            },
         ];
     }
 

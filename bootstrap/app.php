@@ -62,6 +62,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('auth');
 $app->configure('jwt');
+$app->configure('dompdf');
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
@@ -100,6 +101,7 @@ $app->register(App\Providers\AuthServiceProvider::class);
 $app->register(Illuminate\Database\MigrationServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Maatwebsite\Excel\ExcelServiceProvider::class);
+$app->register(\Barryvdh\DomPDF\ServiceProvider::class);
 
 // Add alias for Excel
 class_alias(Maatwebsite\Excel\Facades\Excel::class, 'Excel');
