@@ -23,6 +23,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@store');
     $router->get('me', 'AuthController@me');
 
+    $router->group(['prefix' => 'dropdown'], function () use ($router) {
+        $router->get('/maskapai', 'MaskapaiController@dropdown');  
+    });
+
     $router->group(['middleware' => 'auth:api'], function () use ($router) {
         $router->group(['prefix' => 'request-lists'], function () use ($router) {
             $router->group(['middleware' => 'role_access:guest'], function() use ($router) {
@@ -52,6 +56,16 @@ $router->group(['prefix' => 'api'], function () use ($router) {
                 $router->post('/', 'LaundryItemController@store');     // Create a new laundry item
                 $router->put('/{id}', 'LaundryItemController@update'); // Update an existing laundry item
                 $router->delete('/{id}', 'LaundryItemController@destroy'); // Delete a laundry item by ID
+            });
+        });
+
+        $router->group(['prefix' => 'maskapai'], function () use ($router) {
+            $router->get('/', 'MaskapaiController@index');      // Get all laundry items
+            $router->group(['middleware' => 'role_access'], function() use ($router) {
+                $router->get('/{id}', 'MaskapaiController@show');   // Get a specific laundry item by ID
+                $router->post('/', 'MaskapaiController@store');     // Create a new laundry item
+                $router->put('/{id}', 'MaskapaiController@update'); // Update an existing laundry item
+                $router->delete('/{id}', 'MaskapaiController@destroy'); // Delete a laundry item by ID
             });
         });
 

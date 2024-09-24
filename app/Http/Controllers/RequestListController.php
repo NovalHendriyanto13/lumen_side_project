@@ -190,7 +190,7 @@ class RequestListController extends Controller
             'request_list.tgl_permintaan',
             'request_list.tgl_selesai',
             'users.nama',
-            'users.user_kru',
+            'maskapai.nama AS user_kru',
             'request_list.no_permintaan',
             'request_list.no_pickup',
             'request_list.no_kamar',
@@ -205,6 +205,7 @@ class RequestListController extends Controller
             ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
             ->leftJoin('users', 'request_list.user_id', '=', 'users.id')
             ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->leftJoin('maskapai', 'maskapai.id', '=', 'users.user_kru')
             ->when(!empty($request->status), function($q) use ($request) {
                 return $q->where('request_list.status', $request->status);
             })
@@ -225,7 +226,7 @@ class RequestListController extends Controller
             'request_list.tgl_permintaan',
             'request_list.tgl_selesai',
             'users.nama',
-            'users.user_kru',
+            'maskapai.nama AS user_kru',
             'request_list.no_permintaan',
             'request_list.no_pickup',
             'request_list.no_kamar',
@@ -244,6 +245,7 @@ class RequestListController extends Controller
             ->leftJoin('users AS checker', 'request_list.checked_by', '=', 'checker.id')
             ->leftJoin('users AS delivery', 'request_list.delivery_by', '=', 'delivery.id')
             ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
+            ->leftJoin('maskapai', 'maskapai.id', '=', 'users.user_kru')
             ->when(!empty($request->status), function($q) use ($request) {
                 return $q->where('request_list.status', $request->status);
             })
@@ -253,9 +255,19 @@ class RequestListController extends Controller
             ->orderBy('request_list.id', 'desc')
             ->get();
 
+        $userKru = '';
+        if (!empty($request->user_kru)) {
+            $crew = array_map(function($item) {
+                return $item['user_kru'];
+            }, $requestList->toArray());
+
+            reset($crew);
+            $userKru = current($crew);
+        }
+
         $data = [
             'title' => 'PICKUP AND DELIVERY',
-            'crew' => !empty($request->user_kru) ? $request->user_kru : '',
+            'crew' => $userKru,
             'items' => $requestList,
         ];
         // return view('reports.request-list.index', $data);
@@ -264,6 +276,6 @@ class RequestListController extends Controller
         
         // // Return the generated PDF as a download
         $filename = 'Laundry_Report_'.date('Ymd');
-        return $pdf->download($filename.'.pdf');
+        return $pdf->stream($filename.'.pdf');
     }
 }
