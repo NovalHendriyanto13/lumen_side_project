@@ -23,6 +23,7 @@
         <div>{{ $crew }} </div>
     </div>
     <div class="content">
+        <div>Tanggal : {{ date('d F Y') }}</div>
         <table border="1">
             <thead>
             <tr>
