@@ -276,6 +276,6 @@ class RequestListController extends Controller
         
         // // Return the generated PDF as a download
         $filename = 'Laundry_Report_'.date('Ymd');
-        return $pdf->stream($filename.'.pdf');
+        return $pdf->download($filename.'.pdf');
     }
 }
