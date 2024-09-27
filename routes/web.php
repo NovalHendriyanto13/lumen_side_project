@@ -61,12 +61,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
         $router->group(['prefix' => 'maskapai'], function () use ($router) {
             $router->get('/', 'MaskapaiController@index');      // Get all laundry items
-            $router->group(['middleware' => 'role_access'], function() use ($router) {
-                $router->get('/{id}', 'MaskapaiController@show');   // Get a specific laundry item by ID
-                $router->post('/', 'MaskapaiController@store');     // Create a new laundry item
-                $router->put('/{id}', 'MaskapaiController@update'); // Update an existing laundry item
-                $router->delete('/{id}', 'MaskapaiController@destroy'); // Delete a laundry item by ID
-            });
+            $router->get('/{id}', 'MaskapaiController@show');   // Get a specific laundry item by ID
+            $router->post('/', 'MaskapaiController@store');     // Create a new laundry item
+            $router->put('/{id}', 'MaskapaiController@update'); // Update an existing laundry item
+            $router->delete('/{id}', 'MaskapaiController@destroy'); // Delete a laundry item by ID
         });
 
         $router->group(['prefix' => 'users'], function () use ($router) {

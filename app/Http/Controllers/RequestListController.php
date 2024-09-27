@@ -252,6 +252,9 @@ class RequestListController extends Controller
             ->when(!empty($request->user_kru), function($q) use ($request) {
                 return $q->where('users.user_kru', $request->user_kru);
             })
+            ->when(!empty($request->daily) && ($request->daily == true), function($q) use ($request) {
+                return $q->where('request_list.tgl_permintaan', 'like', '%'. date('Y-m-d'). '%');
+            })
             ->orderBy('request_list.id', 'desc')
             ->get();
 
@@ -274,7 +277,7 @@ class RequestListController extends Controller
         // Load the view and pass the data
         $pdf = Pdf::loadView('reports.request-list.index', $data)->setPaper('letter', 'landscape');;
         
-        // // Return the generated PDF as a download
+        // Return the generated PDF as a download
         $filename = 'Laundry_Report_'.date('Ymd');
         return $pdf->download($filename.'.pdf');
     }
