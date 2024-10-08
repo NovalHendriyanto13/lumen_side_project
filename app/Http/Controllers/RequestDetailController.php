@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RequestList;
 use App\Models\RequestDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class RequestDetailController extends Controller
 {
@@ -41,7 +42,17 @@ class RequestDetailController extends Controller
             'description' => 'sometimes|required|string|max:255',
         ]);
 
-        $detail->update($request->all());
+        $image = null;
+        if ($request->file('image')) {
+            $filename = $request->file('image')->getClientOriginalName();
+            $r = $request->file('image')->move(storage_path('images'), $filename);
+            $image = 'images/'.$r->getBasename();
+        }
+
+        $payload = $request->all();
+        $payload['image'] = $image;
+
+        $detail->update($payload);
 
         $response = RequestDetail::select([
             'request_detail.id',
@@ -49,12 +60,17 @@ class RequestDetailController extends Controller
             'request_detail.id_item',
             'request_detail.jml_item',
             'request_detail.description',
+            'request_detail.image',
             'laundry_item.id_item AS item_code',
             'laundry_item.nama'
         ])
             ->leftJoin('laundry_item', 'request_detail.id_item', 'laundry_item.id')
             ->where('request_detail.id', $id)
             ->first();
+
+        if (!empty($response->image)) {
+            $response->image = env('APP_URL', ''). '/api/image?filename='.base64_encode($response->image);
+        }
 
         return $this->success($response);
     }

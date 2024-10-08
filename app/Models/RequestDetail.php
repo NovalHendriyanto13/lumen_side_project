@@ -18,6 +18,7 @@ class RequestDetail extends Model
         'id_item',
         'jml_item',
         'description',
+        'image',
     ];
 
     // Define relationships, if necessary

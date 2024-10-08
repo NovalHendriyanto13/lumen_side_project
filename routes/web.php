@@ -22,6 +22,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('logout', 'AuthController@logout');
     $router->post('register', 'AuthController@store');
     $router->get('me', 'AuthController@me');
+    $router->get('image', 'Controller@getImage');
 
     $router->group(['prefix' => 'dropdown'], function () use ($router) {
         $router->get('/maskapai', 'MaskapaiController@dropdown');  
@@ -45,7 +46,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
         $router->group(['prefix' => 'request-details'], function () use ($router) {
             $router->post('/', 'RequestDetailController@store');     // Create a new request detail
-            $router->put('/{id}', 'RequestDetailController@update'); // Update an existing request detail
+            $router->post('/{id}', 'RequestDetailController@update'); // Update an existing request detail
             $router->delete('/{id}', 'RequestDetailController@destroy'); // Delete a request detail by ID
         });
         

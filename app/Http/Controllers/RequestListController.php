@@ -47,11 +47,20 @@ class RequestListController extends Controller
             'request_detail.id_item',
             'request_detail.jml_item',
             'request_detail.description',
+            'request_detail.image',
             'laundry_item.id_item as item_code',
             'laundry_item.nama'
         ])
             ->join('laundry_item', 'request_detail.id_item', 'laundry_item.id')
             ->where('request_list_id', $id)->get();
+
+        $detailItems->map(function($item) {
+            if (!empty($item->image)) {
+                $item->image = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->image);
+            }
+            return $item;
+        });
+
         $request->items = $detailItems;
 
         return $this->success($request);

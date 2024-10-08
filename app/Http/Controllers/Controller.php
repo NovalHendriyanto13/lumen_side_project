@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Laravel\Lumen\Routing\Controller as BaseController;
+use Illuminate\Http\Request;
 
 class Controller extends BaseController
 {
@@ -26,5 +27,16 @@ class Controller extends BaseController
             'message' => $message,
             'data' => $data
         ]);
+    }
+
+    public function getImage(Request $request) {
+        $filename = base64_decode($request->filename);
+        $path = storage_path($filename);
+
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
     }
 }
