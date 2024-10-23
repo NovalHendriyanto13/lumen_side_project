@@ -160,6 +160,25 @@ class AuthController extends Controller
             'nik' => 'sometimes|required|string|max:255|unique:users,nik,' . $id,
             'username' => 'sometimes|required|string|max:255|unique:users,username,' . $id,
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
+        ]);
+
+        $user->update($request->all());
+
+        return $this->success($user);
+    }
+
+    public function changePassword(Request $request)
+    {
+
+        $id = auth()->user()->id;
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return $this->failed([], 'User not found', 404);
+        }
+
+        $validator = $this->validate($request, [
             'password' => 'sometimes|required|string|min:6',
         ]);
 

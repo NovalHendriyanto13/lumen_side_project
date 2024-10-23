@@ -20,61 +20,35 @@
 <body>
     <div class="header">
         <h3>{{ $title }}</h3>
-        <div>{{ $crew }} </div>
     </div>
     <div class="content">
         <div>Tanggal : {{ date('d F Y') }}</div>
         <table border="1">
             <thead>
             <tr>
-                <td rowspan="3">Date</td>
-                <td rowspan="3">Guest Name</td>
-                <td rowspan="3">Room</td>
-                <td colspan="3">Pickup</td>
-                <td colspan="2">Total</td>
-                <td rowspan="3">Date</td>
-                <td colspan="3">Delivery</td>
-                <td colspan="2">Total</td>
-            </tr>
-            <tr>
-                <td>Checked By</td>
-                <td>Informasi Awal dari OT</td>
-                <td>Pengambilan Tiba di kamar</td>
-                <td rowspan="2">LD</td>
-                <td rowspan="2">Keterangan</td>
-                <td>Checked By</td>
-                <td>Informasi Awal dari OT</td>
-                <td>Pengambilan Tiba di kamar</td>
-                <td rowspan="2">HR</td>
-                <td rowspan="2">Box</td>
-            </tr>
-            <tr>
+                <td>Complain Date</td>
+                <td>Finished Date</td>
+                <td>NIK</td>
                 <td>Name</td>
-                <td>Time</td>
-                <td>Time</td>
-                <td>Name</td>
-                <td>Time</td>
-                <td>Time</td>
+                <td>Complain No</td>
+                <td>Complain</td>
+                <td>Response No</td>
+                <td>Response</td>
+                <td>Status</td>
             </tr>
-            
             </thead>
             <tbody>
             @foreach($items as $item)
             <tr>
-                <td>{{ $item->tgl_permintaan }}</td>
-                <td>{{ $item->nama }}</td>
-                <td>{{ $item->no_kamar }}</td>
-                <td>{{ $item->checked_by }}</td>
-                <td></td>
-                <td>{{ $item->jam_pickup }}</td>
-                <td></td>
-                <td>{{ $item->nama_pakaian}} - {{ $item->deskripsi }}</td>
+                <td>{{ $item->tgl_pengaduan }}</td>
                 <td>{{ $item->tgl_selesai }}</td>
-                <td>{{ $item->delivery_by }}</td>
-                <td></td>
-                <td>{{ $item->jam_selesai }}</td>
-                <td></td>
-                <td>{{ $item->jml_item }}</td>
+                <td>{{ $item->nik }}</td>
+                <td>{{ $item->name }}</td>
+                <td>{{ $item->no_pengaduan }}</td>
+                <td>{{ $item->pengaduan}}</td>
+                <td>{{ $item->no_tanggapan }}</td>
+                <td>{{ $item->tanggapan }}</td>
+                <td>{{ $item->status }}</td>
             </tr>
             @endforeach
             </tbody>

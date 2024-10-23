@@ -26,17 +26,17 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->group(['middleware' => 'auth:api'], function () use ($router) {
         $router->group(['prefix' => 'pengaduan'], function () use ($router) {
-            $router->group(['middleware' => 'role_access:user'], function() use ($router) {
-                $router->post('/', 'PengaduanController@store');
-                $router->post('/{id}', 'PengaduanController@update'); // Update a specific request list
-            });
             $router->get('/', 'PengaduanController@index');      // Retrieve all request lists
             $router->get('/{id}', 'PengaduanController@show');  
             $router->group(['middleware' => 'role_access'], function() use ($router) {
-                $router->put('/update-status/{id}', 'PengaduanController@updateStatus');
+                $router->get('/dropdown/status', 'PengaduanController@dropdownStatus');
                 $router->delete('/{id}', 'PengaduanController@destroy');
                 // $router->post('/download-report', 'PengaduanController@downloadReport');
-                // $router->post('/download-pdf', 'PengaduanController@downloadPdf');
+                $router->post('/download-pdf', 'PengaduanController@downloadPdf');
+            });
+            $router->group(['middleware' => 'role_access:user'], function() use ($router) {
+                $router->post('/', 'PengaduanController@store');
+                $router->post('/{id}', 'PengaduanController@update'); // Update a specific request list
             });
         });
 
@@ -69,6 +69,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
             $router->post('/', 'AuthController@store');
             $router->get('/profile', 'AuthController@profile');
             $router->put('/profile-update', 'AuthController@profileUpdate');
+            $router->put('/change-password', 'AuthController@changePassword');
             $router->get('/{id}', 'AuthController@show');
             $router->put('/{id}', 'AuthController@update');
             $router->delete('/{id}', 'AuthController@destroy');

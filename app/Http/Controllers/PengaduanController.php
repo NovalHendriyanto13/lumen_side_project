@@ -11,7 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PengaduanController extends Controller
 {
-    private $_statuses = ['new', 'progress', 'finished', 'pending', 'deleted'];
+    private $_statuses = ['new', 'progress', 'finished', 'pending'];
     // Retrieve all request lists
     public function index(Request $request)
     {
@@ -132,8 +132,12 @@ class PengaduanController extends Controller
             'deskripsi' => 'required',
         ]);
 
+        $noPengaduan = $pengaduan->no_pengaduan;
         $image = null;
         if ($request->file('foto_pengaduan')) {
+            if (is_file(storage_path($pengaduan->foto_pengaduan))) {
+                unlink(storage_path($pengaduan->foto_pengaduan));
+            }
             $filename = $request->file('foto_pengaduan')->getClientOriginalName();
             $r = $request->file('foto_pengaduan')->move(storage_path('images/'.$noPengaduan), $filename);
             $image = 'images/'.$noPengaduan.'/'.$r->getBasename();
@@ -166,64 +170,32 @@ class PengaduanController extends Controller
         return $this->success([], 'Request deleted successfully');
     }
 
-    public function updateStatus(Request $request, $id)
+    public function dropdownStatus(Request $request)
     {
-        $pengaduan = Pengaduan::find($id);
-
-        if (!$pengaduan) {
-            return $this->failed([], 'Request not found', 404);
-        }
-
-        $currentStatus = $pengaduan->status;
-        $newStatusIndex = (array_search($currentStatus, $this->_statuses)) + 1;
-        
-        if ($newStatusIndex >= (count($this->_statuses))) {
-            return $this->failed([], 'laundry sudah selesai', 401);
-        }
-        if ($this->_statuses[$newStatusIndex] == 'pickup') {
-            $pengaduan->no_pickup = 'PU'.substr(strtotime('now'), -3, 3);
-            $pengaduan->jam_pickup = date('H:i:s');
-        }
-        if ($this->_statuses[$newStatusIndex] == 'checking') {
-            $pengaduan->checked_by = auth()->user()->id;
-        }
-        if ($this->_statuses[$newStatusIndex] == 'delivery') {
-            $pengaduan->delivery_by = auth()->user()->id;
-        }
-        $pengaduan->status = $this->_statuses[$newStatusIndex];
-        $pengaduan->save();
-
-        return $this->success($pengaduan);
+        return $this->success($this->_statuses);
     }
 
     public function downloadReport(Request $request) {
         $pengaduan = Pengaduan::select([
-            'request_list.tgl_permintaan',
-            'request_list.tgl_selesai',
+            'pengaduan.tgl_pengaduan',
+            'pengaduan.tgl_selesai',
+            'users.nik',
             'users.nama',
-            'maskapai.nama AS user_kru',
-            'request_list.no_permintaan',
-            'request_list.no_pickup',
-            'request_list.no_kamar',
-            'request_list.status',
-            'request_list.jam_pickup',
-            'request_list.jam_selesai',
-            'laundry_item.id_item AS kode_pakaian',
-            'laundry_item.nama AS nama_pakaian',
-            'request_detail.jml_item',
-            'request_detail.description AS deskripsi',
+            'pengaduan.no_pengaduan',
+            'pengaduan.deskripsi AS pengaduan',
+            'pengaduan.status',
+            'tanggapan.no_tanggapan',
+            'tanggapan.deskripsi AS tanggapan',
         ])
-            ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
-            ->leftJoin('users', 'request_list.user_id', '=', 'users.id')
-            ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
-            ->leftJoin('maskapai', 'maskapai.id', '=', 'users.user_kru')
+            ->leftJoin('tanggapan', 'pengaduan.id', '=', 'tanggapan.pengaduan_id')
+            ->leftJoin('users', 'pengaduan.user_id', '=', 'users.id')
             ->when(!empty($request->status), function($q) use ($request) {
-                return $q->where('request_list.status', $request->status);
+                return $q->where('pengaduan.status', $request->status);
             })
-            ->when(!empty($request->user_kru), function($q) use ($request) {
-                return $q->where('users.user_kru', $request->user_kru);
+            ->when(!empty($request->nik), function($q) use ($request) {
+                return $q->where('users.nik', $request->nik);
             })
-            ->orderBy('request_list.id', 'desc')
+            ->orderBy('pengaduan.id', 'desc')
             ->get();
 
         $exports = new PengaduanExport($pengaduan);
@@ -233,63 +205,37 @@ class PengaduanController extends Controller
 
     public function downloadPdf(Request $request) {
         $pengaduan = Pengaduan::select([
-            'request_list.id',
-            'request_list.tgl_permintaan',
-            'request_list.tgl_selesai',
+            'pengaduan.tgl_pengaduan',
+            'pengaduan.tgl_selesai',
+            'users.nik',
             'users.nama',
-            'maskapai.nama AS user_kru',
-            'request_list.no_permintaan',
-            'request_list.no_pickup',
-            'request_list.no_kamar',
-            'request_list.status',
-            'request_list.jam_pickup',
-            'request_list.jam_selesai',
-            'laundry_item.id_item AS kode_pakaian',
-            'laundry_item.nama AS nama_pakaian',
-            'request_detail.jml_item',
-            'request_detail.description AS deskripsi',
-            'checker.nama AS checked_by',
-            'delivery.nama AS delivery_by'
+            'pengaduan.no_pengaduan',
+            'pengaduan.deskripsi AS pengaduan',
+            'pengaduan.status',
+            'tanggapan.no_tanggapan',
+            'tanggapan.deskripsi AS tanggapan',
         ])
-            ->leftJoin('request_detail', 'request_list.id', '=', 'request_detail.request_list_id')
-            ->leftJoin('users', 'request_list.user_id', '=', 'users.id')
-            ->leftJoin('users AS checker', 'request_list.checked_by', '=', 'checker.id')
-            ->leftJoin('users AS delivery', 'request_list.delivery_by', '=', 'delivery.id')
-            ->leftJoin('laundry_item', 'laundry_item.id', '=', 'request_detail.id_item')
-            ->leftJoin('maskapai', 'maskapai.id', '=', 'users.user_kru')
+            ->leftJoin('tanggapan', 'pengaduan.id', '=', 'tanggapan.pengaduan_id')
+            ->leftJoin('users', 'pengaduan.user_id', '=', 'users.id')
             ->when(!empty($request->status), function($q) use ($request) {
-                return $q->where('request_list.status', $request->status);
+                return $q->where('pengaduan.status', $request->status);
             })
-            ->when(!empty($request->user_kru), function($q) use ($request) {
-                return $q->where('users.user_kru', $request->user_kru);
+            ->when(!empty($request->nik), function($q) use ($request) {
+                return $q->where('users.nik', $request->nik);
             })
-            ->when(!empty($request->daily) && ($request->daily == true), function($q) use ($request) {
-                return $q->where('request_list.tgl_permintaan', 'like', '%'. date('Y-m-d'). '%');
-            })
-            ->orderBy('request_list.id', 'desc')
+            ->orderBy('pengaduan.id', 'desc')
             ->get();
 
-        $userKru = '';
-        if (!empty($request->user_kru)) {
-            $crew = array_map(function($item) {
-                return $item['user_kru'];
-            }, $pengaduan->toArray());
-
-            reset($crew);
-            $userKru = current($crew);
-        }
-
         $data = [
-            'title' => 'PICKUP AND DELIVERY',
-            'crew' => $userKru,
+            'title' => 'Laporan Pengaduan',
             'items' => $pengaduan,
         ];
         // return view('reports.request-list.index', $data);
         // Load the view and pass the data
-        $pdf = Pdf::loadView('reports.request-list.index', $data)->setPaper('letter', 'landscape');;
+        $pdf = Pdf::loadView('reports.pengaduan.index', $data)->setPaper('letter', 'landscape');;
         
         // Return the generated PDF as a download
-        $filename = 'Laundry_Report_'.date('Ymd');
+        $filename = 'Pengaduan_Report_'.date('Ymd');
         return $pdf->download($filename.'.pdf');
     }
 }
