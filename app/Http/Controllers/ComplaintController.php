@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pengaduan;
+use App\Models\Complaint;
 use App\Models\Tanggapan;
 use App\Exports\RequestListExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class PengaduanController extends Controller
+class ComplaintController extends Controller
 {
-    private $_statuses = ['new', 'progress', 'finished', 'pending'];
+    public $_statuses = ['new', 'progress', 'finished', 'pending'];
     // Retrieve all request lists
     public function index(Request $request)
     {
         $user = auth()->user();
         $role = $user->role;
-                
-        $requests = Pengaduan::select([
+        $limit = !empty($request->limit) ? $request->limit : 100;
+
+        $requests = Complaint::select([
             'pengaduan.id',
             'pengaduan.user_id',
             'pengaduan.no_pengaduan',
@@ -32,6 +33,9 @@ class PengaduanController extends Controller
             ->when($role == 'user', function($q) use ($user) {
                 return $q->where('user_id', $user->id);
             })
+            ->when(!empty($request->no_pengaduan), function($q) use ($request) {
+                return $q->where('no_pengaduan', 'LIKE' , '%'.$request->no_pengaduan.'%');
+            })
             ->when(!empty($request->status), function($q) use ($request) {
                 return $q->where('status', $request->status);
             })
@@ -39,6 +43,8 @@ class PengaduanController extends Controller
                 return $q->whereBetween('tgl_pengaduan', [date('Y-m-d', strtotime($request->start_date)), date('Y-m-d', strtotime($request->end_date))]);
             })
             ->join('users', 'pengaduan.user_id', 'users.id')
+            ->orderBy('pengaduan.tgl_pengaduan', 'DESC')
+            ->limit($limit)
             ->get();
 
         $requests->map(function($item) {
@@ -55,7 +61,7 @@ class PengaduanController extends Controller
     // Retrieve a single request list by ID
     public function show($id)
     {
-        $pengaduan = Pengaduan::select([
+        $pengaduan = Complaint::select([
             'pengaduan.id',
             'pengaduan.user_id',
             'pengaduan.no_pengaduan',
@@ -108,18 +114,18 @@ class PengaduanController extends Controller
             'status' => 'new'
         ]);
         
-        $newRequest = Pengaduan::create($payload);
+        $newRequest = Complaint::create($payload);
         if (!empty($newRequest->foto_pengaduan)) {
             $newRequest->foto_pengaduan = env('APP_URL', ''). '/api/image?filename='.base64_encode($newRequest->foto_pengaduan);
         }
 
-        return $this->success($newRequest, 201);
+        return $this->success($newRequest, 'Create a new complaint is success! your No is '. $noPengaduan);
     }
 
     // Update an existing request list by ID
     public function update(Request $request, $id)
     {
-        $pengaduan = Pengaduan::find($id);
+        $pengaduan = Complaint::find($id);
 
         if (!$pengaduan) {
             return $this->failed([], 'Request not found', 404);
@@ -159,7 +165,7 @@ class PengaduanController extends Controller
     // Delete an existing request list by ID
     public function destroy($id)
     {
-        $pengaduan = Pengaduan::find($id);
+        $pengaduan = Complaint::find($id);
 
         if (!$pengaduan) {
             return $this->failed([], 'Request not found', 404);
@@ -176,7 +182,7 @@ class PengaduanController extends Controller
     }
 
     public function downloadReport(Request $request) {
-        $pengaduan = Pengaduan::select([
+        $pengaduan = Complaint::select([
             'pengaduan.tgl_pengaduan',
             'pengaduan.tgl_selesai',
             'users.nik',
@@ -204,7 +210,7 @@ class PengaduanController extends Controller
     }
 
     public function downloadPdf(Request $request) {
-        $pengaduan = Pengaduan::select([
+        $pengaduan = Complaint::select([
             'pengaduan.tgl_pengaduan',
             'pengaduan.tgl_selesai',
             'users.nik',

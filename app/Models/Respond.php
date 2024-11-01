@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RequestDetail extends Model
+class Respond extends Model
 {
     // Define the table associated with the model
     protected $table = 'request_detail';

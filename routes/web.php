@@ -23,47 +23,30 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@store');
     $router->get('me', 'AuthController@me');
     $router->get('image', 'Controller@getImage');
+    $router->get('/dropdown/status', 'ComplaintController@dropdownStatus');
 
     $router->group(['middleware' => 'auth:api'], function () use ($router) {
-        $router->group(['prefix' => 'pengaduan'], function () use ($router) {
-            $router->get('/', 'PengaduanController@index');      // Retrieve all request lists
-            $router->get('/{id}', 'PengaduanController@show');  
+        $router->group(['prefix' => 'complaint'], function () use ($router) {
+            $router->get('/', 'ComplaintController@index');      // Retrieve all request lists
+            $router->get('/{id}', 'ComplaintController@show');  
+            
             $router->group(['middleware' => 'role_access'], function() use ($router) {
-                $router->get('/dropdown/status', 'PengaduanController@dropdownStatus');
-                $router->delete('/{id}', 'PengaduanController@destroy');
-                // $router->post('/download-report', 'PengaduanController@downloadReport');
-                $router->post('/download-pdf', 'PengaduanController@downloadPdf');
+                $router->delete('/{id}', 'ComplaintController@destroy');
+                // $router->post('/download-report', 'ComplaintController@downloadReport');
+                $router->post('/download-pdf', 'ComplaintController@downloadPdf');
             });
             $router->group(['middleware' => 'role_access:user'], function() use ($router) {
-                $router->post('/', 'PengaduanController@store');
-                $router->post('/{id}', 'PengaduanController@update'); // Update a specific request list
+                $router->post('/', 'ComplaintController@store');
+                $router->post('/{id}', 'ComplaintController@update'); // Update a specific request list
             });
         });
 
-        $router->group(['prefix' => 'request-details'], function () use ($router) {
-            $router->post('/', 'RequestDetailController@store');     // Create a new request detail
-            $router->post('/{id}', 'RequestDetailController@update'); // Update an existing request detail
-            $router->delete('/{id}', 'RequestDetailController@destroy'); // Delete a request detail by ID
+        $router->group(['prefix' => 'respond'], function () use ($router) {
+            $router->post('/', 'RespondController@store');     // Create a new request detail
+            $router->post('/{id}', 'RespondController@update'); // Update an existing request detail
+            $router->delete('/{id}', 'RespondController@destroy'); // Delete a request detail by ID
         });
         
-        $router->group(['prefix' => 'laundry-items'], function () use ($router) {
-            $router->get('/', 'LaundryItemController@index');      // Get all laundry items
-            $router->group(['middleware' => 'role_access'], function() use ($router) {
-                $router->get('/{id}', 'LaundryItemController@show');   // Get a specific laundry item by ID
-                $router->post('/', 'LaundryItemController@store');     // Create a new laundry item
-                $router->put('/{id}', 'LaundryItemController@update'); // Update an existing laundry item
-                $router->delete('/{id}', 'LaundryItemController@destroy'); // Delete a laundry item by ID
-            });
-        });
-
-        $router->group(['prefix' => 'maskapai'], function () use ($router) {
-            $router->get('/', 'MaskapaiController@index');      // Get all laundry items
-            $router->get('/{id}', 'MaskapaiController@show');   // Get a specific laundry item by ID
-            $router->post('/', 'MaskapaiController@store');     // Create a new laundry item
-            $router->put('/{id}', 'MaskapaiController@update'); // Update an existing laundry item
-            $router->delete('/{id}', 'MaskapaiController@destroy'); // Delete a laundry item by ID
-        });
-
         $router->group(['prefix' => 'users'], function () use ($router) {
             $router->get('/', 'AuthController@index');
             $router->post('/', 'AuthController@store');
