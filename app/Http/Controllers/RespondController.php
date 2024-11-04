@@ -2,74 +2,87 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RequestList;
-use App\Models\RequestDetail;
+use App\Models\Complaint;
+use App\Models\Respond;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class RequestDetailController extends Controller
+class RespondController extends Controller
 {
-    private $_statuses = ['request', 'pickup', 'checking', 'on_progress', 'delivery', 'done'];
+    private $_statuses = ['progress', 'done'];
 
     // Create a new request detail
     public function store(Request $request)
     {
         $this->validate($request, [
-            'request_list_id' => 'required|integer',
-            'id_item' => 'required|integer',
-            'jml_item' => 'required|integer',
-            'description' => 'required|string|max:255',
+            'pengaduan_id' => 'required|integer',
+            'deskripsi' => 'required|string|max:255',
         ]);
 
-        $newDetail = RequestDetail::create($request->all());
+        $noTanggapan = 'TP'.date('ym').substr(strtotime('now'), -3, 3);
+        $image = null;
+        if ($request->file('foto_tanggapan')) {
+            $filename = $request->file('foto_tanggapan')->getClientOriginalName();
+            $r = $request->file('foto_tanggapan')->move(storage_path('images/'.$noTanggapan), $filename);
+            $image = 'images/'.$noTanggapan.'/'.$r->getBasename();
+        }
 
-        return $this->success($newDetail, 201);
+        $payload = array_merge($request->all(), [
+            'user_id' => $request->auth->id,
+            'no_tanggapan' => $noTanggapan,
+            'tgl_tanggapan' => date('Y-m-d'),
+            'deskripsi' => $request->deskripsi,
+            'foto_tanggapan' => $image,
+            'status' => 'progress'
+        ]);
+
+        $new = Respond::create($payload);
+
+        $complaint = Complaint::where('id', $request->pengaduan_id)
+            ->update(['status' => 'progress']);
+
+        return $this->success($new, 201);
     }
 
     // Update an existing request detail by ID
     public function update(Request $request, $id)
     {
-        $detail = RequestDetail::find($id);
+        $detail = Respond::find($id);
 
         if (!$detail) {
             return $this->failed([], 'Request detail not found', 404);
         }
 
         $this->validate($request, [
-            'request_list_id' => 'sometimes|required|integer',
-            'id_item' => 'sometimes|required|integer',
-            'jml_item' => 'sometimes|required|integer',
-            'description' => 'sometimes|required|string|max:255',
+            'deskripsi' => 'required',
         ]);
 
+        $noTanggapan = $detail->no_tanggapan;
         $image = null;
-        if ($request->file('image')) {
-            $filename = $request->file('image')->getClientOriginalName();
-            $r = $request->file('image')->move(storage_path('images'), $filename);
-            $image = 'images/'.$r->getBasename();
+        if ($request->file('foto_tanggapan')) {
+            if (is_file(storage_path($detail->foto_tanggapan))) {
+                unlink(storage_path($detail->foto_tanggapan));
+            }
+            $filename = $request->file('foto_tanggapan')->getClientOriginalName();
+            $r = $request->file('foto_tanggapan')->move(storage_path('images/'.$notanggapan), $filename);
+            $image = 'images/'.$notanggapan.'/'.$r->getBasename();
         }
 
-        $payload = $request->all();
-        $payload['image'] = $image;
+        if (!empty($image)) {
+            $detail->foto_tanggapan = $image;
+        }
 
+        $payload = array_merge($request->all(), [
+            'user_id' => $request->auth->id,
+        ]);
+        
         $detail->update($payload);
 
-        $response = RequestDetail::select([
-            'request_detail.id',
-            'request_detail.request_list_id',
-            'request_detail.id_item',
-            'request_detail.jml_item',
-            'request_detail.description',
-            'request_detail.image',
-            'laundry_item.id_item AS item_code',
-            'laundry_item.nama'
-        ])
-            ->leftJoin('laundry_item', 'request_detail.id_item', 'laundry_item.id')
-            ->where('request_detail.id', $id)
+        $response = Respond::where('id', $id)
             ->first();
 
-        if (!empty($response->image)) {
-            $response->image = env('APP_URL', ''). '/api/image?filename='.base64_encode($response->image);
+        if (!empty($response->foto_tanggapan)) {
+            $response->foto_tanggapan = env('APP_URL', ''). '/api/image?filename='.base64_encode($response->foto_tanggapan);
         }
 
         return $this->success($response);

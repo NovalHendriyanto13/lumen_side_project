@@ -7,23 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 class Respond extends Model
 {
     // Define the table associated with the model
-    protected $table = 'request_detail';
+    protected $table = 'tanggapan';
 
     // Specify the primary key, if not 'id'
     protected $primaryKey = 'id';
 
     // Define the fillable attributes for mass assignment
     protected $fillable = [
-        'request_list_id',
-        'id_item',
-        'jml_item',
-        'description',
-        'image',
+        'pengaduan_id',
+        'user_id',
+        'no_tanggapan',
+        'tgl_tanggapan',
+        'foto_tanggapan',
+        'deskripsi',
+        'status'
     ];
 
     // Define relationships, if necessary
-    public function requestList()
+    public function complaint()
     {
-        return $this->belongsTo(RequestList::class);
+        return $this->belongsTo(Complaint::class);
     }
 }

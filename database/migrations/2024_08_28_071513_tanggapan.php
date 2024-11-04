@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('pengaduan_id');
             $table->integer('user_id');
-            $table->string('no_tanggpan', 12)->unique();
+            $table->string('no_tanggapan', 12)->unique();
             $table->date('tgl_tanggapan');
             $table->string('deskripsi');
             $table->string('status');

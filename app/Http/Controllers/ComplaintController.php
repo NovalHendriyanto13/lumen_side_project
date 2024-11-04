@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Complaint;
-use App\Models\Tanggapan;
+use App\Models\Respond;
 use App\Exports\RequestListExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -73,19 +73,28 @@ class ComplaintController extends Controller
             'users.nama'
         ])
             ->join('users', 'pengaduan.user_id', 'users.id')
-            // ->leftJoin('tanggapan', 'request_detail.id_item', 'laundry_item.id')
-            ->where('pengaduan.id', $id)->get();
+            ->where('pengaduan.id', $id)
+            ->first();
 
         if (!$pengaduan) {
             return $this->failed([], 'Request not found', 404);
         }
 
-        $pengaduan->map(function($item) {
-            if (!empty($item->foto_pengaduan)) {
-                $item->foto_pengaduan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_pengaduan);
-            }
-            return $item;
-        });
+        if (!empty($pengaduan->foto_pengaduan)) {
+            $pengaduan->foto_pengaduan = env('APP_URL', ''). '/api/image?filename='.base64_encode($pengaduan->foto_pengaduan);
+        }
+        $responds = Respond::select([
+            'id',
+            'tgl_tanggapan',
+            'no_tanggapan',
+            'deskripsi',
+            'foto_tanggapan',
+            'status'
+        ])
+            ->where('pengaduan_id', $id)
+            ->get();
+
+        $pengaduan->tanggapan = $responds;
 
         return $this->success($pengaduan);
     }
