@@ -94,6 +94,11 @@ class ComplaintController extends Controller
             ->where('pengaduan_id', $id)
             ->get();
 
+        $responds->map(function($item) {
+            $item->foto_tanggapan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_tanggapan);
+            return $item;
+        });
+
         $pengaduan->tanggapan = $responds;
 
         return $this->success($pengaduan);
@@ -238,6 +243,9 @@ class ComplaintController extends Controller
             ->when(!empty($request->nik), function($q) use ($request) {
                 return $q->where('users.nik', $request->nik);
             })
+            ->when((!empty($request->start_date)) && (!empty($request->to_date)), function($q) use ($request) {
+                return $q->whereBetween('pengaduan.tgl_pengaduan', [$request->start_date, $request->end_date]);
+            })
             ->orderBy('pengaduan.id', 'desc')
             ->get();
 
@@ -245,12 +253,16 @@ class ComplaintController extends Controller
             'title' => 'Laporan Pengaduan',
             'items' => $pengaduan,
         ];
-        // return view('reports.request-list.index', $data);
-        // Load the view and pass the data
-        $pdf = Pdf::loadView('reports.pengaduan.index', $data)->setPaper('letter', 'landscape');;
-        
-        // Return the generated PDF as a download
-        $filename = 'Pengaduan_Report_'.date('Ymd');
-        return $pdf->download($filename.'.pdf');
+
+        if (!empty($request->preview)) {
+            return view('reports.pengaduan.index', $data);
+        } else {
+            // // Load the view and pass the data
+            $pdf = Pdf::loadView('reports.pengaduan.index', $data)->setPaper('letter', 'landscape');;
+            
+            // // Return the generated PDF as a download
+            $filename = 'Pengaduan_Report_'.date('Ymd');
+            return $pdf->download($filename.'.pdf');
+        }
     }
 }

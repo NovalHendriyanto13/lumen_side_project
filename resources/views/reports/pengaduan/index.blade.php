@@ -40,15 +40,15 @@
             <tbody>
             @foreach($items as $item)
             <tr>
-                <td>{{ $item->tgl_pengaduan }}</td>
-                <td>{{ $item->tgl_selesai }}</td>
+                <td>{{ date('d F Y', strtotime($item->tgl_pengaduan)) }}</td>
+                <td>{{ ($item->tgl_selesai != '1970-01-01') ? date('d F Y', strtotime($item->tgl_selesai)) : '' }}</td>
                 <td>{{ $item->nik }}</td>
-                <td>{{ $item->name }}</td>
+                <td>{{ $item->nama }}</td>
                 <td>{{ $item->no_pengaduan }}</td>
                 <td>{{ $item->pengaduan}}</td>
                 <td>{{ $item->no_tanggapan }}</td>
                 <td>{{ $item->tanggapan }}</td>
-                <td>{{ $item->status }}</td>
+                <td>{{ strtoupper($item->status) }}</td>
             </tr>
             @endforeach
             </tbody>
