@@ -64,8 +64,8 @@ class RespondController extends Controller
                 unlink(storage_path($detail->foto_tanggapan));
             }
             $filename = $request->file('foto_tanggapan')->getClientOriginalName();
-            $r = $request->file('foto_tanggapan')->move(storage_path('images/'.$notanggapan), $filename);
-            $image = 'images/'.$notanggapan.'/'.$r->getBasename();
+            $r = $request->file('foto_tanggapan')->move(storage_path('images/'.$noTanggapan), $filename);
+            $image = 'images/'.$noTanggapan.'/'.$r->getBasename();
         }
 
         if (!empty($image)) {

@@ -17,7 +17,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     use Authenticatable, Authorizable;
 
     protected $fillable = [
-        'nama', 'username', 'email', 'alamat', 'password', 'role', 'no_telp', 'user_kru'
+        'nama', 'username', 'email', 'alamat', 'password', 'role', 'no_telp', 'nik'
     ];
 
     protected $hidden = ['password'];
@@ -45,11 +45,6 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
             'email' => $this->email,
             'role' => $this->role
         ];
-    }
-
-    public function requestDetails()
-    {
-        return $this->hasMany(RequestList::class);
     }
 
     public function setPasswordAttribute($value)

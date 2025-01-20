@@ -95,7 +95,9 @@ class ComplaintController extends Controller
             ->get();
 
         $responds->map(function($item) {
-            $item->foto_tanggapan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_tanggapan);
+            if (!empty($item->foto_pengaduan)) {
+                $item->foto_pengaduan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_tanggapan);
+            }
             return $item;
         });
 
