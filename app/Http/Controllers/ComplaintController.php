@@ -178,6 +178,30 @@ class ComplaintController extends Controller
         return $this->success($pengaduan);
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $pengaduan = Complaint::find($id);
+
+        if (!$pengaduan) {
+            return $this->failed([], 'Request not found', 404);
+        }
+
+        if ($pengaduan->status != 'progress') {
+            return $this->failed([], 'Update data is failed! Status is not "PROGRESS"', 404);
+        }
+        $this->validate($request, [
+            'status' => 'required',
+        ]);
+
+        $payload = array_merge($request->all(), [
+            'user_id' => $request->auth->id,
+        ]);
+        
+        $pengaduan->update($payload);
+
+        return $this->success($pengaduan);
+    }
+
     // Delete an existing request list by ID
     public function destroy($id)
     {

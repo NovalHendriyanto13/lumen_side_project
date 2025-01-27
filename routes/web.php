@@ -34,6 +34,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
                 $router->delete('/{id}', 'ComplaintController@destroy');
                 // $router->post('/download-report', 'ComplaintController@downloadReport');
                 $router->post('/download-pdf', 'ComplaintController@downloadPdf');
+                $router->put('/update-status/{id}', 'ComplaintController@updateStatus');
             });
             $router->group(['middleware' => 'role_access:user'], function() use ($router) {
                 $router->post('/', 'ComplaintController@store');

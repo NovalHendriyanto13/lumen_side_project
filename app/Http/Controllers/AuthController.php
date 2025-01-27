@@ -23,8 +23,14 @@ class AuthController extends Controller
         ]);
 
         $credentials = $request->only('username', 'password');
+
+        $user = User::where('username', $request->username)->first();
+        if (!$user) {
+            return $this->failed(['error' => 'User tidak di temukan']);
+        }
+
         if (!$token = auth()->attempt($credentials)) {
-            return $this->failed(['error' => 'Unauthorized']);
+            return $this->failed(['error' => 'Password salah!']);
         }
 
         $user = auth()->user();
@@ -62,12 +68,22 @@ class AuthController extends Controller
     {
         $validator = $this->validate($request, [
             'nama' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
+            'username' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:6',
             'role' => 'required|string|max:50',
             'no_telp' => 'required|string|max:255',
         ]);
+
+        $checkUser = User::where([
+            'username' => $request->username,
+            'email' => $request->email,
+        ])
+            ->first();
+
+        if ($checkUser) {
+            return $this->failed(['error' => 'User sudah terdaftar didalam data']);
+        }
 
         $user = User::create([
             'nama' => $request->nama,

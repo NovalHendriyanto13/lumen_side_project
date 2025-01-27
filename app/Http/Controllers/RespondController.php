@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class RespondController extends Controller
 {
-    private $_statuses = ['progress', 'done'];
+    private $_statuses = ['progress', 'finished'];
 
     // Create a new request detail
     public function store(Request $request)
