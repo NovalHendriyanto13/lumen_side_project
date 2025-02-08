@@ -95,8 +95,8 @@ class ComplaintController extends Controller
             ->get();
 
         $responds->map(function($item) {
-            if (!empty($item->foto_pengaduan)) {
-                $item->foto_pengaduan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_tanggapan);
+            if (!empty($item->foto_tanggapan)) {
+                $item->foto_tanggapan = env('APP_URL', ''). '/api/image?filename='.base64_encode($item->foto_tanggapan);
             }
             return $item;
         });
@@ -155,7 +155,7 @@ class ComplaintController extends Controller
         ]);
 
         $noPengaduan = $pengaduan->no_pengaduan;
-        $image = null;
+        $image = $pengaduan->foto_pengaduan;
         if ($request->file('foto_pengaduan')) {
             if (is_file(storage_path($pengaduan->foto_pengaduan))) {
                 unlink(storage_path($pengaduan->foto_pengaduan));
@@ -171,6 +171,7 @@ class ComplaintController extends Controller
 
         $payload = array_merge($request->all(), [
             'user_id' => $request->auth->id,
+            'foto_pengaduan' => $image,
         ]);
         
         $pengaduan->update($payload);

@@ -32,7 +32,7 @@ class RespondController extends Controller
             'no_tanggapan' => $noTanggapan,
             'tgl_tanggapan' => date('Y-m-d'),
             'deskripsi' => $request->deskripsi,
-            'foto_tanggapan' => $image,
+            'foto_tanggapan' => !empty($image) ? env('APP_URL', ''). '/api/image?filename='.base64_encode($image) : null,
             'status' => 'progress'
         ]);
 
@@ -58,7 +58,7 @@ class RespondController extends Controller
         ]);
 
         $noTanggapan = $detail->no_tanggapan;
-        $image = null;
+        $image = $detail->foto_tanggapan;
         if ($request->file('foto_tanggapan')) {
             if (is_file(storage_path($detail->foto_tanggapan))) {
                 unlink(storage_path($detail->foto_tanggapan));
@@ -74,6 +74,7 @@ class RespondController extends Controller
 
         $payload = array_merge($request->all(), [
             'user_id' => $request->auth->id,
+            'foto_tanggapan' => $image,
         ]);
         
         $detail->update($payload);
