@@ -194,11 +194,12 @@ class ComplaintController extends Controller
             'status' => 'required',
         ]);
 
-        $payload = array_merge($request->all(), [
-            'user_id' => $request->auth->id,
-        ]);
+        $payload = array_merge($request->all(), []);
         
         $pengaduan->update($payload);
+
+        $respond = Respond::where('pengaduan_id', $id)
+            ->update(['status' => $request->status]);
 
         return $this->success($pengaduan);
     }

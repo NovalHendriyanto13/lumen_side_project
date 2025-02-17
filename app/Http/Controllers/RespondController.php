@@ -32,11 +32,14 @@ class RespondController extends Controller
             'no_tanggapan' => $noTanggapan,
             'tgl_tanggapan' => date('Y-m-d'),
             'deskripsi' => $request->deskripsi,
-            'foto_tanggapan' => !empty($image) ? env('APP_URL', ''). '/api/image?filename='.base64_encode($image) : null,
+            'foto_tanggapan' => !empty($image) ? $image : null,
             'status' => 'progress'
         ]);
 
         $new = Respond::create($payload);
+        if (!empty($image)) {
+            $new->foto_tanggapan = env('APP_URL', ''). '/api/image?filename='.base64_encode($new->foto_tanggapan);
+        }
 
         $complaint = Complaint::where('id', $request->pengaduan_id)
             ->update(['status' => 'progress']);
